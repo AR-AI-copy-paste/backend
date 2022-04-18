@@ -3,24 +3,34 @@ from io import BytesIO
 from models.pyTess import pyTessMain
 from models.u2net import u2Main
 
-imgOutPath = r"./images/IMGout/"
+from flask import Flask, request, send_file
 
-imgName = "text.png"
-imgPath = r"./images/IMGin/" + imgName
+app = Flask(__name__)
 
-img2Name = "obj4.png"
-img2Path = r"./images/IMGin/" + img2Name
 
-tesseractPath = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-pyTessMain.setup(tesseractPath)
+@app.route('/api/textEx')
+def TextExtract():
+    img = Image.open(r"./images/incImg/temp.png")
 
-img = Image.open(imgPath)
-img2 = Image.open(img2Path)
+    imgText = pyTessMain.tesseractExtract(img)
 
-imgText = pyTessMain.tesseractExtract(img)
+    return imgText
 
-result = u2Main.remove(img2, model_name="u2net", alpha_matting=True)
-resultImg = Image.open(BytesIO(result)).convert("RGBA")
-resultImg.save(imgOutPath + "result.png")
 
-resultImg.show()
+@app.route('/objectEx', methods=['GET', 'POST'])
+def ObjectExtract():
+    if request.method == 'GET':
+        print("GAY")
+        return "GAY"
+    else:
+        test = request.files.get('image','')
+        newImg = Image.open(test)
+        img = Image.open(r"./images/IMGin/obj4.png")
+
+        result = u2Main.remove(newImg, model_name="u2net", alpha_matting=True)
+        resultImg = Image.open(BytesIO(result)).convert("RGBA")
+        #resultImg.show()
+        resultImg.save(r"./images/IMGout/result2.png")
+
+        print("PENIS ",send_file(resultImg, mimetype='image/*') )
+        return send_file(resultImg, mimetype='image/*')
